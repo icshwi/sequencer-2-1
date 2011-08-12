@@ -19,6 +19,10 @@
 
 use strict;
 
+my $valgrind = "";
+`valgrind -h`;
+$valgrind = "valgrind -q --log-file=test " if $? == 0;
+
 my ($target, $stem, $exe, $ioc, $softioc, $softdbd) = @ARGV;
 
 my $db = "../$stem.db";
@@ -45,16 +49,16 @@ if (!$pid) {
   exec("$softioc -D $softdbd -S -d $db");
   die "exec failed: $err";
 }
-system("./$exe -S");
+system("$valgrind./$exe -S");
 $killit;
 EOF
 } elsif (-r "$db") {
   print $OUT <<EOF;
-exec "./$exe -S -d $db" or die "exec failed: $err";
+exec "$valgrind./$exe -S -d $db" or die "exec failed: $err";
 EOF
 } else {
   print $OUT <<EOF;
-exec "./$exe -S" or die "exec failed: $err";
+exec "$valgrind./$exe -S" or die "exec failed: $err";
 EOF
 }
 
