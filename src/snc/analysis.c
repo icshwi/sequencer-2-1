@@ -46,12 +46,10 @@ Program *analyse_program(Expr *prog, Options options)
 {
 	Program *p = new(Program);
 
-	assert(prog);
+	assert(prog);	/* precondition */
 #ifdef DEBUG
 	report("-------------------- Analysis --------------------\n");
 #endif
-
-	assert(p);
 
 	p->options = options;
 	p->prog = prog;
@@ -86,15 +84,15 @@ static int analyse_defn(Expr *scope, Expr *parent_scope, void *parg)
 	VarList **pvar_list;
 	Expr *defn;
 
-	assert(scope);
+	assert(scope);	/* precondition */
 
 #ifdef DEBUG
 	report("analyse_defn: scope=(%s:%s)\n",
 		expr_type_name(scope), scope->value);
 #endif
 
-	assert(is_scope(scope));
-	assert(!parent_scope || is_scope(parent_scope));
+	assert(is_scope(scope));				/* precondition */
+	assert(!parent_scope || is_scope(parent_scope));	/* precondition */
 
 	defn_list = defn_list_from_scope(scope);
 	pvar_list = pvar_list_from_scope(scope);
@@ -115,7 +113,9 @@ static int analyse_defn(Expr *scope, Expr *parent_scope, void *parg)
 		{
 		case D_OPTION:
 			if (scope->type == D_PROG)
+			{
 				analyse_option(&p->options, defn);
+			}
 			else if (scope->type == D_STATE)
 			{
 				analyse_state_option(&scope->extra.e_state->options, defn);
@@ -147,19 +147,21 @@ static int analyse_defn(Expr *scope, Expr *parent_scope, void *parg)
 
 VarList **pvar_list_from_scope(Expr *scope)
 {
-	assert(is_scope(scope));
+	assert(scope);			/* precondition */
+	assert(is_scope(scope));	/* precondition */
+
 	switch(scope->type)
 	{
 	case D_PROG:
 		return &scope->extra.e_prog;
 	case D_SS:
-		assert(scope->extra.e_ss);
+		assert(scope->extra.e_ss);	/* invariant */
 		return &scope->extra.e_ss->var_list;
 	case D_STATE:
-		assert(scope->extra.e_state);
+		assert(scope->extra.e_state);	/* invariant */
 		return &scope->extra.e_state->var_list;
 	case D_WHEN:
-		assert(scope->extra.e_when);
+		assert(scope->extra.e_when);	/* invariant */
 		return &scope->extra.e_when->var_list;
 	case D_ENTRY:
 		return &scope->extra.e_entry;
@@ -174,7 +176,9 @@ VarList **pvar_list_from_scope(Expr *scope)
 
 Expr *defn_list_from_scope(Expr *scope)
 {
-	assert(is_scope(scope));
+	assert(scope);			/* precondition */
+	assert(is_scope(scope));	/* precondition */
+
 	switch(scope->type)
 	{
 	case D_PROG:
@@ -212,8 +216,15 @@ static void analyse_definitions(Program *p)
 /* Options at the top-level. Note: latest given value for option wins. */
 static void analyse_option(Options *options, Expr *defn)
 {
-	char	*optname = defn->value;
-	int	optval = defn->extra.e_option;
+	char	*optname;
+	int	optval;
+
+	assert(options);		/* precondition */
+	assert(defn);			/* precondition */
+	assert(defn->type == D_OPTION);	/* precondition */
+
+	optname = defn->value;
+	optval = defn->extra.e_option;
 
 	for (; *optname; optname++)
 	{
@@ -241,8 +252,15 @@ static void analyse_option(Options *options, Expr *defn)
 /* Options in state declarations. Note: latest given value for option wins. */
 static void analyse_state_option(StateOptions *options, Expr *defn)
 {
-	char	*optname = defn->value;
-	int	optval = defn->extra.e_option;
+	char	*optname;
+	int	optval;
+
+	assert(options);		/* precondition */
+	assert(defn);			/* precondition */
+	assert(defn->type == D_OPTION);	/* precondition */
+
+	optname = defn->value;
+	optval = defn->extra.e_option;
 
 	for (; *optname; optname++)
 	{
@@ -262,12 +280,13 @@ static void analyse_declaration(SymTable st, Expr *scope, Expr *defn)
 	Var *vp;
         VarList *var_list;
 
-	assert(scope);
-	assert(defn);
+	assert(scope);			/* precondition */
+	assert(defn);			/* precondition */
+	assert(defn->type == D_DECL);	/* precondition */
 
 	vp = defn->extra.e_decl;
 
-	assert(vp);
+	assert(vp);			/* invariant */
 #ifdef DEBUG
 	report("declaration: %s\n", vp->name);
 #endif
@@ -302,17 +321,24 @@ static void analyse_declaration(SymTable st, Expr *scope, Expr *defn)
 
 static void analyse_assign(SymTable st, ChanList *chan_list, Expr *scope, Expr *defn)
 {
-	char *name = defn->value;
-	Var *vp = find_var(st, name, scope);
+	char *name;
+	Var *vp;
 
-	assert(defn->type == D_ASSIGN);
+	assert(chan_list);		/* precondition */
+	assert(scope);			/* precondition */
+	assert(defn);			/* precondition */
+	assert(defn->type == D_ASSIGN);	/* precondition */
+
+	name = defn->value;
+	vp = find_var(st, name, scope);
+
 	if (!vp)
 	{
 		error_at_expr(defn, "cannot assign variable '%s': "
 			"variable was not declared\n", name);
 		return;
 	}
-	assert(vp->type);
+	assert(vp->type);		/* invariant */
 	if (!type_assignable(vp->type))
 	{
 		error_at_expr(defn, "cannot assign variable '%s': wrong type\n", name);
@@ -381,10 +407,11 @@ static void assign_elem(
 	char		*pv_name
 )
 {
-	assert(chan_list);
-	assert(defn);
-	assert(vp);
-	assert(n_subscr <= type_array_length1(vp->type));
+	assert(chan_list);				/* precondition */
+	assert(defn);					/* precondition */
+	assert(vp);					/* precondition */
+	assert(n_subscr <= type_array_length1(vp->type));/*precondition */
+	assert(vp->assign != M_SINGLE);			/* precondition */
 
 	if (vp->assign == M_NONE)
 	{
@@ -420,18 +447,18 @@ static void assign_subscript(
 {
 	uint n_subscr;
 
-	assert(chan_list);
-	assert(defn);
-	assert(vp);
-	assert(subscr);
+	assert(chan_list);			/* precondition */
+	assert(defn);				/* precondition */
+	assert(vp);				/* precondition */
+	assert(subscr);				/* precondition */
 	assert(subscr->type == E_CONST);	/* syntax */
-	assert(pv_name);
+	assert(pv_name);			/* precondition */
 
 #ifdef DEBUG
 	report("assign %s[%s] to '%s';\n", vp->name, subscr->value, pv_name);
 #endif
 
-	if (vp->type->tag != V_ARRAY)
+	if (vp->type->tag != V_ARRAY)	/* establish L3 */
 	{
 		error_at_expr(defn, "variable '%s' is not an array\n", vp->name);
 		return;
@@ -471,7 +498,7 @@ static void assign_multi(
 	report("assign %s to {", vp->name);
 #endif
 
-	if (vp->type->tag != V_ARRAY)
+	if (vp->type->tag != V_ARRAY)	/* establish L3 */
 	{
 		error_at_expr(defn, "variable '%s' is not an array\n", vp->name);
 		return;
@@ -504,7 +531,7 @@ static void monitor_var(Expr *defn, Var *vp)
 	report("monitor %s;", vp->name);
 #endif
 
-	if (vp->assign == M_NONE)
+	if (vp->assign == M_NONE)		/* establish L2a */
 	{
 		error_at_expr(defn, "cannot monitor variable '%s': not assigned\n", vp->name);
 		return;
@@ -523,7 +550,7 @@ static void monitor_var(Expr *defn, Var *vp)
 	else
 	{
 		uint n;
-		assert(vp->assign == M_MULTI);
+		assert(vp->assign == M_MULTI);	/* by L2a and else */
 		for (n = 0; n < type_array_length1(vp->type); n++)
 		{
 			vp->chan.multi[n]->monitor = TRUE;
@@ -544,7 +571,7 @@ static void monitor_elem(Expr *defn, Var *vp, Expr *subscr)
 	report("monitor %s[%s];\n", vp->name, subscr->value);
 #endif
 
-	if (vp->type->tag != V_ARRAY)
+	if (vp->type->tag != V_ARRAY)	/* establish L3 */
 	{
 		error_at_expr(defn, "variable '%s' is not an array\n", vp->name);
 		return;
@@ -555,7 +582,7 @@ static void monitor_elem(Expr *defn, Var *vp, Expr *subscr)
 			vp->name, subscr->value);
 		return;
 	}
-	if (vp->assign == M_NONE)
+	if (vp->assign == M_NONE)	/* establish L2a */
 	{
 		error_at_expr(defn, "array element '%s[%d]' not assigned\n",
 			vp->name, n_subscr);
@@ -567,13 +594,13 @@ static void monitor_elem(Expr *defn, Var *vp, Expr *subscr)
 			vp->name, n_subscr);
 		return;		/* nothing to do */
 	}
-	if (vp->assign == M_SINGLE)
+	if (vp->assign == M_SINGLE)	/* establish L1a */
 	{
 		error_at_expr(defn, "variable '%s' is assigned to a single channel "
 			"and can only be monitored wholesale\n", vp->name);
 		return;
 	}
-	assert(vp->assign == M_MULTI);
+	assert(vp->assign == M_MULTI);	/* by L1a and L2a */
 	if (!vp->chan.multi[n_subscr]->name)
 	{
 		error_at_expr(defn, "array element '%s[%d]' not assigned\n",
@@ -641,12 +668,7 @@ static void sync_var(Expr *defn, Var *vp, Var *evp)
 			vp->name);
 		return;
 	}
-	if (vp->monitor != M_SINGLE)
-	{
-		error_at_expr(defn, "variable '%s' not monitored\n", vp->name);
-		return;
-	}
-	if (vp->assign == M_NONE)
+	if (vp->assign == M_NONE)		/* establish L2b */
 	{
 		error_at_expr(defn, "variable '%s' not assigned\n", vp->name);
 		return;
@@ -655,8 +677,7 @@ static void sync_var(Expr *defn, Var *vp, Var *evp)
 	if (vp->assign == M_SINGLE)
 	{
 		assert(vp->chan.single);
-		assert(vp->monitor != M_MULTI);	/* by L1 */
-		assert(vp->sync != M_MULTI);	/* by L1 */
+		assert(vp->sync != M_MULTI);	/* by L1b */
 		vp->chan.single->sync = evp;
 		vp->sync = M_SINGLE;
 	}
@@ -667,7 +688,6 @@ static void sync_var(Expr *defn, Var *vp, Var *evp)
 		vp->sync = M_SINGLE;
 		for (n = 0; n < type_array_length1(vp->type); n++)
 		{
-			assert(vp->chan.multi[n]->monitor);
 			assert(!vp->chan.multi[n]->sync);
 			vp->chan.multi[n]->sync = evp;
 		}
@@ -690,7 +710,7 @@ static void sync_elem(Expr *defn, Var *vp, Expr *subscr, Var *evp)
 	report("sync %s[%d] to %s;\n", vp->name, subscr->value, evp->name);
 #endif
 
-	if (vp->type->tag != V_ARRAY)
+	if (vp->type->tag != V_ARRAY)	/* establish L3 */
 	{
 		error_at_expr(defn, "variable '%s' is not an array\n", vp->name);
 		return;
@@ -701,6 +721,7 @@ static void sync_elem(Expr *defn, Var *vp, Expr *subscr, Var *evp)
 			vp->name, subscr->value);
 		return;
 	}
+	/* establish L1b */
 	if (vp->assign == M_SINGLE)
 	{
 		error_at_expr(defn, "variable '%s' is assigned to a single channel "
@@ -713,13 +734,7 @@ static void sync_elem(Expr *defn, Var *vp, Expr *subscr, Var *evp)
 			vp->name, n_subscr);
 		return;
 	}
-	assert(vp->assign == M_MULTI);
-	if (vp->monitor == M_NONE || !vp->chan.multi[n_subscr]->monitor)
-	{
-		error_at_expr(defn, "array element '%s[%d]' not monitored\n",
-			vp->name, n_subscr);
-		return;
-	}
+	assert(vp->assign == M_MULTI);	/* L1b */
 	if (vp->chan.multi[n_subscr]->sync)
 	{
 		warning_at_expr(defn, "'%s[%d]' already sync'd\n",
@@ -789,8 +804,8 @@ static void syncq_var(Expr *defn, Var *vp, SyncQ *qp)
 {
 	assert(defn);
 	assert(vp);
-	assert(qp);					/* call */
-	assert(vp->syncq != M_SINGLE);			/* call */
+	assert(qp);				/* call */
+	assert(vp->syncq != M_SINGLE);		/* call */
 
 #ifdef DEBUG
 	report("syncq %s to %s;\n", vp->name, qp->ef_var->name);
@@ -802,12 +817,7 @@ static void syncq_var(Expr *defn, Var *vp, SyncQ *qp)
 			vp->name);
 		return;
 	}
-	if (vp->monitor != M_SINGLE)
-	{
-		error_at_expr(defn, "variable '%s' not monitored\n", vp->name);
-		return;
-	}
-	if (vp->assign == M_NONE)
+	if (vp->assign == M_NONE)		/* establish L2c */
 	{
 		error_at_expr(defn, "variable '%s' not assigned\n", vp->name);
 		return;
@@ -815,9 +825,8 @@ static void syncq_var(Expr *defn, Var *vp, SyncQ *qp)
 	vp->syncq = M_SINGLE;
 	if (vp->assign == M_SINGLE)
 	{
-		assert(vp->chan.single);
-		assert(vp->monitor != M_MULTI);	/* by L1 */
-		assert(vp->syncq != M_MULTI);	/* by L1 */
+		assert(vp->chan.single);	/* invariant */
+		assert(vp->syncq != M_MULTI);	/* by L1c */
 		vp->chan.single->syncq = qp;
 		vp->syncq = M_SINGLE;
 	}
@@ -828,7 +837,6 @@ static void syncq_var(Expr *defn, Var *vp, SyncQ *qp)
 		vp->syncq = M_SINGLE;
 		for (n = 0; n < type_array_length1(vp->type); n++)
 		{
-			assert(vp->chan.multi[n]->monitor);
 			assert(!vp->chan.multi[n]->syncq);
 			vp->chan.multi[n]->syncq = qp;
 		}
@@ -851,7 +859,7 @@ static void syncq_elem(Expr *defn, Var *vp, Expr *subscr, SyncQ *qp)
 	report("syncq %s[%d] to %s;\n", vp->name, subscr->value, qp->ef_var->name);
 #endif
 
-	if (vp->type->tag != V_ARRAY)
+	if (vp->type->tag != V_ARRAY)	/* establish L3 */
 	{
 		error_at_expr(defn, "variable '%s' is not an array\n", vp->name);
 		return;
@@ -862,6 +870,7 @@ static void syncq_elem(Expr *defn, Var *vp, Expr *subscr, SyncQ *qp)
 			vp->name, subscr->value);
 		return;
 	}
+	/* establish L1c */
 	if (vp->assign == M_SINGLE)
 	{
 		error_at_expr(defn, "variable '%s' is assigned to a single channel "
@@ -874,13 +883,7 @@ static void syncq_elem(Expr *defn, Var *vp, Expr *subscr, SyncQ *qp)
 			vp->name, n_subscr);
 		return;
 	}
-	assert(vp->assign == M_MULTI);
-	if (vp->monitor == M_NONE || !vp->chan.multi[n_subscr]->monitor)
-	{
-		error_at_expr(defn, "array element '%s[%d]' not monitored\n",
-			vp->name, n_subscr);
-		return;
-	}
+	assert(vp->assign == M_MULTI);			/* L1c */
 	if (vp->chan.multi[n_subscr]->syncq)
 	{
 		warning_at_expr(defn, "'%s[%d]' already syncq'd\n",
