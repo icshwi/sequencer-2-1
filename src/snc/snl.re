@@ -146,6 +146,11 @@ static char *strdupft(uchar *start, uchar *stop) {
 	return result;
 }
 
+/*
+ * Note: Linemarkers differ between compilers. The MS C preprocessor outputs
+ * "#line <linenum> <filename>" directives, while gcc leaves off the "line".
+ */
+
 /*!re2c
 	re2c:yyfill:parameter	= 0;
 
@@ -159,6 +164,7 @@ static char *strdupft(uchar *start, uchar *stop) {
 	FS	= [fFlL];
 	IS	= [uUlL]*;
 	ESC	= [\\] ([abfnrtv?'"\\] | "x" HEX+ | OCT+);
+	LINE	= SPC* "#" (SPC* "line")? SPC+;
 */
 
 static int scan(Scanner *s, Token *t) {
@@ -186,15 +192,15 @@ snl:
 				s->line++;
 				goto snl;
 			}
+	LINE		{
+				line_marker_part = cursor - s->tok;
+				goto line_marker;
+			}
 	["]		{
 				s->tok = end = cursor;
 				goto string_const;
 			}
 	"/*"		{ goto comment; }
-	"#" SPC*	{
-				line_marker_part = cursor - s->tok;
-				goto line_marker;
-			}
 	"%{"		{
 				s->tok = cursor;
 				in_c_code = 1;
@@ -403,7 +409,7 @@ c_code:
 				LITERAL(CCODE, embedded_c_code, strdupft(s->tok, cursor - 2));
 			}
 	.		{ goto c_code; }
-	"#" SPC+	{
+	LINE		{
 				line_marker_part = cursor - s->tok;
 				goto line_marker;
 			}
