@@ -18,7 +18,7 @@ sync x to efx;
 
 foreign MAX_STRING_SIZE;
 
-#define MAX_TESTS 30
+#define MAX_TESTS 5
 
 entry {
     testPlan(MAX_TESTS);
