@@ -60,11 +60,11 @@ struct options
 	uint	reent:1;		/* reentrant at run-time */
 	uint	safe:1;			/* safe (no globals) */
 	uint	newef:1;		/* new event flag mode */
-	uint	main:1;			/* main program */
 
 					/* compile time options */
+	uint	main:1;			/* generate main procedure */
 	uint	init_reg:1;		/* register commands/programs */
-	uint	line:1;			/* line numbering */
+	uint	line:1;			/* generate line markers */
 	uint	warn:1;			/* compiler warnings */
 };
 
