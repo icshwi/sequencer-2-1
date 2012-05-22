@@ -111,7 +111,3 @@ list. Comments are welcome, as usual.
 
   Implementation: need to have monitor flags for each state set; must also
   change interface to snc (monitored becomes a bitmask with numSS bits).
-
-* Lewis Muir suggested that snc give a warning for unused states, i.e. ones
-  that cannot be reached from the first state. Seems this needs a reachability
-  starting with the first state set. Shouldn't be too hard.
