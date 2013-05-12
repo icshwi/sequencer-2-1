@@ -25,7 +25,8 @@ Welcome to the home page of the **EPICS Sequencer** project.
    Reference
    PV-API
    Examples
-   Notes
+   ReleaseNotes-2-1
+   ReleaseNotes-2-0-and-older
    KnownProblems
    Plans
 
