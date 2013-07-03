@@ -109,6 +109,9 @@ epicsShareFunc pvStat epicsShareAPI seq_pvGet(SS_ID ss, VAR_ID varId, enum compT
 			);
 			return pvStatERROR;
 		case epicsEventWaitError:
+			/* try to recover */
+			ss->getReq[varId] = NULL;
+			epicsEventSignal(getSem);
 			errlogSevPrintf(errlogFatal,
 				"pvGet: epicsEventWaitWithTimeout() failure\n");
 			return pvStatERROR;
@@ -137,6 +140,9 @@ epicsShareFunc pvStat epicsShareAPI seq_pvGet(SS_ID ss, VAR_ID varId, enum compT
 			);
 			return pvStatERROR;
 		case epicsEventWaitError:
+			/* try to recover */
+			ss->getReq[varId] = NULL;
+			epicsEventSignal(getSem);
 			errlogSevPrintf(errlogFatal,
 				"pvGet: epicsEventTryWait() failure\n");
 			return pvStatERROR;
@@ -147,6 +153,9 @@ epicsShareFunc pvStat epicsShareAPI seq_pvGet(SS_ID ss, VAR_ID varId, enum compT
 	req = (PVREQ *)freeListMalloc(sp->pvReqPool);
 	req->ss = ss;
 	req->ch = ch;
+
+	assert(ss->getReq[varId] == NULL);
+	ss->getReq[varId] = req;
 
 	/* Perform the PV get operation with a callback routine specified.
 	   Requesting more than db channel has available is ok. */
@@ -163,6 +172,7 @@ epicsShareFunc pvStat epicsShareAPI seq_pvGet(SS_ID ss, VAR_ID varId, enum compT
 		meta->message = "get failure";
 		errlogSevPrintf(errlogFatal, "pvGet(var %s, pv %s): pvVarGetCallback() failure: %s\n",
 			ch->varName, dbch->dbName, pvVarGetMess(dbch->pvid));
+		ss->getReq[varId] = NULL;
 		freeListFree(sp->pvReqPool, req);
 		epicsEventSignal(getSem);
 		check_connected(dbch, meta);
@@ -172,11 +182,15 @@ epicsShareFunc pvStat epicsShareAPI seq_pvGet(SS_ID ss, VAR_ID varId, enum compT
 	/* Synchronous: wait for completion */
 	if (compType == SYNC)
 	{
+		epicsEventWaitStatus event_status;
+
 		pvSysFlush(sp->pvSys);
-		switch (epicsEventWaitWithTimeout(getSem, tmo))
+		event_status = epicsEventWaitWithTimeout(getSem, tmo);
+		ss->getReq[varId] = NULL;
+		epicsEventSignal(getSem);
+		switch (event_status)
 		{
 		case epicsEventWaitOK:
-			epicsEventSignal(getSem);
 			status = check_connected(dbch, meta);
 			if (status) return status;
 			if (sp->options & OPT_SAFE)
@@ -230,6 +244,7 @@ epicsShareFunc boolean epicsShareAPI seq_pvGetComplete(SS_ID ss, VAR_ID varId)
 	switch (epicsEventTryWait(getSem))
 	{
 	case epicsEventWaitOK:
+		ss->getReq[varId] = NULL;
 		epicsEventSignal(getSem);
 		status = check_connected(ch->dbch, metaPtr(ch,ss));
 		/* TODO: returning either TRUE or FALSE here seems wrong. We return TRUE,
@@ -243,11 +258,14 @@ epicsShareFunc boolean epicsShareAPI seq_pvGetComplete(SS_ID ss, VAR_ID varId)
 			ss_read_buffer(ss, ch, FALSE);
 		return TRUE;
 	case epicsEventWaitTimeout:
+		epicsEventSignal(getSem);
 		return FALSE;
 	case epicsEventWaitError:
+		ss->getReq[varId] = NULL;
+		epicsEventSignal(getSem);
 		errlogSevPrintf(errlogFatal, "pvGetComplete: "
 		  "epicsEventTryWait(getSemId[%d]) failure\n", varId);
-	default:
+	default: /* pacify gcc which does not understand the we checked all possibilities */
 		return FALSE;
 	}
 }
@@ -262,7 +280,7 @@ static void *putq_cp(void *dest, const void *src, size_t elemSize)
 	struct putq_cp_arg *arg = (struct putq_cp_arg *)src;
 	CHAN *ch = arg->ch;
 
-	return memcpy(pv_value_ptr(dest, ch->type->getType),
+	return memcpy(pv_value_ptr(dest, ch->type->getType), /*BUG? should that be putType?*/
 		arg->var, ch->type->size * ch->count);
 }
 
@@ -273,7 +291,7 @@ static void anonymous_put(SS_ID ss, CHAN *ch)
 	if (ch->queue)
 	{
 		QUEUE queue = ch->queue;
-		pvType type = ch->type->getType;
+		pvType type = ch->type->getType; /*BUG? should that be putType?*/
 		size_t size = ch->type->size;
 		boolean full;
 		struct putq_cp_arg arg = {ch, var};
@@ -369,6 +387,9 @@ epicsShareFunc pvStat epicsShareAPI seq_pvPut(SS_ID ss, VAR_ID varId, enum compT
 			);
 			return pvStatERROR;
 		case epicsEventWaitError:
+			/* try to recover */
+			ss->putReq[varId] = NULL;
+			epicsEventSignal(putSem);
 			errlogSevPrintf(errlogFatal,
 				"pvPut: epicsEventWaitWithTimeout() failure\n");
 			return pvStatERROR;
@@ -399,6 +420,9 @@ epicsShareFunc pvStat epicsShareAPI seq_pvPut(SS_ID ss, VAR_ID varId, enum compT
 			);
 			return pvStatERROR;
 		case epicsEventWaitError:
+			/* try to recover */
+			ss->putReq[varId] = NULL;
+			epicsEventSignal(putSem);
 			errlogSevPrintf(errlogFatal,
 				"pvPut: epicsEventTryWait() failure\n");
 			return pvStatERROR;
@@ -432,6 +456,9 @@ epicsShareFunc pvStat epicsShareAPI seq_pvPut(SS_ID ss, VAR_ID varId, enum compT
 		req->ss = ss;
 		req->ch = ch;
 
+		assert(ss->putReq[varId] == NULL);
+		ss->putReq[varId] = req;
+
 		status = pvVarPutCallback(
 				dbch->pvid,		/* PV id */
 				ch->type->putType,	/* data type */
@@ -441,6 +468,7 @@ epicsShareFunc pvStat epicsShareAPI seq_pvPut(SS_ID ss, VAR_ID varId, enum compT
 				req);			/* user arg */
 		if (status != pvStatOK)
 		{
+			ss->putReq[varId] = NULL;
 			errlogSevPrintf(errlogFatal, "pvPut(var %s, pv %s): pvVarPutCallback() failure: %s\n",
 				ch->varName, dbch->dbName, pvVarGetMess(dbch->pvid));
 			freeListFree(sp->pvReqPool, req);
@@ -453,11 +481,15 @@ epicsShareFunc pvStat epicsShareAPI seq_pvPut(SS_ID ss, VAR_ID varId, enum compT
 	/* Synchronous: wait for completion (10s timeout) */
 	if (compType == SYNC)
 	{
+		epicsEventWaitStatus event_status;
+
 		pvSysFlush(sp->pvSys);
-		switch (epicsEventWaitWithTimeout(putSem, tmo))
+		event_status = epicsEventWaitWithTimeout(putSem, tmo);
+		ss->putReq[varId] = NULL;
+		epicsEventSignal(putSem);
+		switch (event_status)
 		{
 		case epicsEventWaitOK:
-			epicsEventSignal(putSem);
 			status = check_connected(dbch, meta);
 			if (status) return status;
 			break;
@@ -501,6 +533,7 @@ epicsShareFunc boolean epicsShareAPI seq_pvPutComplete(
 		switch (epicsEventTryWait(putSem))
 		{
 		case epicsEventWaitOK:
+			ss->putReq[varId] = NULL;
 			epicsEventSignal(putSem);
 			check_connected(ch->dbch, metaPtr(ch,ss));
 			/* TODO: returning either TRUE or FALSE here seems wrong. We return TRUE,
@@ -508,10 +541,14 @@ epicsShareFunc boolean epicsShareAPI seq_pvPutComplete(
 			   status by calling pvStatus and/or pvMessage. */
 			done = TRUE;
 			break;
+		case epicsEventWaitTimeout:
+			epicsEventSignal(putSem);
+			break;
 		case epicsEventWaitError:
+			ss->putReq[varId] = NULL;
+			epicsEventSignal(putSem);
 			errlogSevPrintf(errlogFatal, "pvPutComplete(%s): "
 			  "epicsEventTryWait(putSem[%d]) failure\n", ch->varName, varId);
-		case epicsEventWaitTimeout:
 			break;
 		}
 
