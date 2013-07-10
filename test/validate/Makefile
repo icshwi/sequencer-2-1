@@ -50,13 +50,17 @@ REGRESSION_TESTS_WITHOUT_DB += opttVar
 REGRESSION_TESTS_WITHOUT_DB += userfunc
 REGRESSION_TESTS_WITHOUT_DB += safeModeNotAssigned
 
+REGRESSION_TESTS_REMOTE_ONLY += pvGetSync
+
 REGRESSION_TESTS += $(REGRESSION_TESTS_WITHOUT_DB)
 REGRESSION_TESTS += $(REGRESSION_TESTS_WITH_DB)
 
 ifeq '$(EPICS_HAS_UNIT_TEST)' '1'
 TESTPROD_HOST += $(REGRESSION_TESTS)
+TESTPROD_HOST += $(REGRESSION_TESTS_REMOTE_ONLY)
 TESTSCRIPTS_HOST += $(REGRESSION_TESTS:%=%.t)
 TESTSCRIPTS_HOST += $(REGRESSION_TESTS_WITH_DB:%=%Ioc.t)
+TESTSCRIPTS_HOST += $(REGRESSION_TESTS_REMOTE_ONLY:%=%Ioc.t)
 endif
 
 #TESTPROD_HOST += ctest
@@ -67,6 +71,7 @@ PROD_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 DBD += seqSoftIoc.dbd
 seqSoftIoc_DBD += base.dbd
+seqSoftIoc_DBD += testSupport.dbd
 
 seqSoftIoc_SRCS += seqSoftIoc_registerRecordDeviceDriver.cpp
 
@@ -113,7 +118,7 @@ vxTestHarness.dbd$(DEP):
 	@echo "$(COMMON_DIR)/vxTestHarness.dbd: ../Makefile" > $@
 endif
 
-$(REGRESSION_TESTS_WITH_DB:%=%Ioc.t): %Ioc.t: %$(EXE) ../makeTestfile.pl
+$(REGRESSION_TESTS_WITH_DB:%=%Ioc.t) $(REGRESSION_TESTS_REMOTE_ONLY:%=%Ioc.t): %Ioc.t: %$(EXE) ../makeTestfile.pl
 	$(PERL) ../makeTestfile.pl $@ $* $< ioc $(USE_VALGRIND)
 
 $(REGRESSION_TESTS:%=%.t): %.t: %$(EXE) ../makeTestfile.pl
