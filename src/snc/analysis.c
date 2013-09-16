@@ -253,9 +253,8 @@ static void analyse_option(Options *options, Expr *defn)
 		  "warning: unknown option '%s'\n", optname);
 		}
 	}
-	if (options->safe && !options->reent) {
+	if (options->safe)
 		options->reent = TRUE;
-	}
 }
 
 /* Options in state declarations. Note: latest given value for option wins. */
