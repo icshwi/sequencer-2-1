@@ -258,7 +258,6 @@ epicsShareFunc boolean epicsShareAPI seq_pvGetComplete(SS_ID ss, VAR_ID varId)
 			ss_read_buffer(ss, ch, FALSE);
 		return TRUE;
 	case epicsEventWaitTimeout:
-		epicsEventSignal(getSem);
 		return FALSE;
 	case epicsEventWaitError:
 		ss->getReq[varId] = NULL;
@@ -542,7 +541,6 @@ epicsShareFunc boolean epicsShareAPI seq_pvPutComplete(
 			done = TRUE;
 			break;
 		case epicsEventWaitTimeout:
-			epicsEventSignal(putSem);
 			break;
 		case epicsEventWaitError:
 			ss->putReq[varId] = NULL;
