@@ -620,10 +620,17 @@ epicsShareFunc pvStat epicsShareAPI seq_pvAssign(SS_ID ss, VAR_ID varId, const c
 			dbch->connected = FALSE;
 			sp->connectCount--;
 
-			if (ch->monitored)
-			{
-				seq_monitor(ch, FALSE);
-			}
+			/* Must not call seq_monitor(ch, FALSE), it would give an
+			error because channel is already dead. Instead mark that no
+			subscriptions are active so when seq_monitor gets called when
+			we re-create the channel, it actually does something. */
+
+			dbch->monid = NULL;
+
+			/* Note ch->monitored remains on because it is a configuration
+			value that belongs to the variable and newly created channels
+			for the same variable should inherit this configuration. */
+
 		}
 
 		if (status != pvStatOK)
