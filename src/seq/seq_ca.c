@@ -364,14 +364,22 @@ void seq_disconnect(SPROG *sp)
 pvStat seq_monitor(CHAN *ch, boolean on)
 {
 	DBCHAN	*dbch = ch->dbch;
+	SPROG	*sp = ch->sprog;
 	pvStat	status;
+	boolean	done;
 
 	assert(ch);
 	assert(dbch);
-	if (on == (dbch->monid != NULL))			/* already done */
-		return pvStatOK;
-	DEBUG("calling pvVarMonitor%s(%p)\n", on?"On":"Off", dbch->pvid);
+
+	epicsMutexMustLock(sp->programLock);
+	done = on == (dbch->monid != NULL);
 	dbch->gotOneMonitor = FALSE;
+	epicsMutexUnlock(sp->programLock);
+
+	if (done)
+		return pvStatOK;
+
+	DEBUG("calling pvVarMonitor%s(%p)\n", on?"On":"Off", dbch->pvid);
 	if (on)
 		status = pvVarMonitorOn(
 				dbch->pvid,		/* pvid */
