@@ -33,6 +33,8 @@ in the file LICENSE that is included with this distribution.
 #include "seq.h"
 #include "seq_debug.h"
 
+epicsShareExtern double seq_sync_timeout;
+
 double seq_sync_timeout = 10.0;
 
 static pvStat check_connected(DBCHAN *dbch, PVMETA *meta)
