@@ -23,7 +23,9 @@ SEQ_PATH = www/control/SoftDist/sequencer
 USER_AT_HOST = wwwcsr@www-csr.bessy.de
 DATE = $(shell date -I)
 SNAPSHOT = seq-snapshot-$(DATE)
-SEQ_TAG = $(subst .,-,$(SEQ_RELEASE))
+SEQ_TAG = seq-$(subst .,-,$(SEQ_RELEASE))
+SEQ_TAG_TIME := $(shell darcs changes --all --xml-output \
+	--matches 'exact "TAG $(SEQ_TAG)"' | perl -ne 'print "$$1.$$2" if /date=.(\d{12})(\d{2})/')
 
 include $(TOP)/configure/RULES_TOP
 
@@ -36,8 +38,9 @@ upload:
 	ssh $(USER_AT_HOST) 'cd $(SEQ_PATH)/releases && ln -f -s $(SNAPSHOT).tar.gz seq-snapshot-latest.tar.gz'
 	$(RM) $(SNAPSHOT).tar.gz
 
-release: upload
-	darcs dist -d seq-$(SEQ_RELEASE) -t seq-$(SEQ_TAG)
+release:
+	darcs show files | xargs touch -t $(SEQ_TAG_TIME)
+	darcs dist -d seq-$(SEQ_RELEASE) -t $(SEQ_TAG)
 	rsync seq-$(SEQ_RELEASE).tar.gz $(USER_AT_HOST):$(SEQ_PATH)/releases/
 	$(RM) seq-$(SEQ_RELEASE).tar.gz
 
