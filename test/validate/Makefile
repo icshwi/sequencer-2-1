@@ -24,6 +24,8 @@ TESTPROD_HOST += optt
 TESTPROD_HOST += stop
 TESTPROD_HOST += subscript
 TESTPROD_HOST += syncq
+TESTPROD_HOST += version
+
 
 REGRESSION_TESTS_WITH_DB += bittypes
 REGRESSION_TESTS_WITH_DB += evflag
