@@ -29,24 +29,29 @@ SEQ_TAG_TIME := $(shell darcs changes --all --xml-output \
 
 include $(TOP)/configure/RULES_TOP
 
-upload: 
-	rsync -r -t $(TOP)/html/ $(USER_AT_HOST):$(SEQ_PATH)/
+sync-repos:
 	darcs push $(DEFAULT_REPO)
 	darcs push $(USER_AT_HOST):$(SEQ_PATH)/repo/branch-$(BRANCH)
 
-snapshot: upload
+upload-docs:
+	$(MAKE) -sj docs=1 pdf=1
+	rsync -r -t $(TOP)/html/ $(USER_AT_HOST):$(SEQ_PATH)/
+
+snapshot: sync-repos
 	darcs dist -d $(SNAPSHOT)
 	rsync $(SNAPSHOT).tar.gz $(USER_AT_HOST):$(SEQ_PATH)/releases/
 	ssh $(USER_AT_HOST) 'cd $(SEQ_PATH)/releases && ln -f -s $(SNAPSHOT).tar.gz seq-$(BRANCH)-snapshot-latest.tar.gz'
 	$(RM) $(SNAPSHOT).tar.gz
 
-release: upload
+release:
 	darcs show files | xargs touch -t $(SEQ_TAG_TIME)
 	darcs dist -d seq-$(SEQ_RELEASE) -t '^$(SEQ_TAG)$$'
 	rsync seq-$(SEQ_RELEASE).tar.gz $(USER_AT_HOST):$(SEQ_PATH)/releases/
 	$(RM) seq-$(SEQ_RELEASE).tar.gz
 
-changelog:
+changelog: force
 	DARCS_ALWAYS_COLOR=0 darcs changes -a --from-tag=. | egrep -v '^(Author|Date|patch)' > changelog
+
+force:
 
 .PHONY: release upload
