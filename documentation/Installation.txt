@@ -44,6 +44,7 @@ Older releases can be downloaded by following the links here:
    ========= =========================== ============================
    Version   Release Notes               Known Problems
    ========= =========================== ============================
+   `2.1.17`_ :ref:`Release_Notes_2.1.17` n/a
    `2.1.16`_ :ref:`Release_Notes_2.1.16` :ref:`Known_Problems_2.1.16`
    `2.1.15`_ :ref:`Release_Notes_2.1.15` :ref:`Known_Problems_2.1.15`
    `2.1.14`_ :ref:`Release_Notes_2.1.14` :ref:`Known_Problems_2.1.14`
@@ -105,6 +106,7 @@ patches.
 You can also follow development by using the `repository browser`_.
 
 .. _latest snapshot: http://www-csr.bessy.de/control/SoftDist/sequencer/releases/seq-snapshot-latest.tar.gz
+.. _2.1.17: http://www-csr.bessy.de/control/SoftDist/sequencer/releases/seq-2.1.17.tar.gz
 .. _2.1.16: http://www-csr.bessy.de/control/SoftDist/sequencer/releases/seq-2.1.16.tar.gz
 .. _2.1.15: http://www-csr.bessy.de/control/SoftDist/sequencer/releases/seq-2.1.15.tar.gz
 .. _2.1.14: http://www-csr.bessy.de/control/SoftDist/sequencer/releases/seq-2.1.14.tar.gz
