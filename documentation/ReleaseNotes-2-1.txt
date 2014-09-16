@@ -6,6 +6,11 @@ Release Notes for Version 2.1
 Release 2.1.17
 --------------
 
+* In the tests an internal variable from the runtime system is declared
+  which is (intentionally) not exported through a header file. The
+  declarations now use ``epicsShareExtern`` instead of ``extern``. This
+  should fix the problems when building the tests on Windows.
+
 * Some patches from the lemon parser generator upstream repo have been
   applied. Among them is the fix for the lemon crash on Windows 8.1 x64 with
   Visual Studio 2013, proposed by Freddie Akeroyd
@@ -14,7 +19,7 @@ Release 2.1.17
 * To avoid stack overflows when monitoring large arrays on systems with a
   fixed stack size, you can now tell the sequencer to use malloc/free for
   temporary copies of CA messages (instead of stack allocated memory) by
-  adding the line
+  adding the line ::
 
     USE_MALLOC_FOR_TEMPORARY_COPY=YES
 
@@ -23,9 +28,11 @@ Release 2.1.17
   VxWorks). It would be better to avoid the extra copy, which is how things
   are done in version 2.2.
 
-* Pulled a test from the 2.2 branch that tests (and demonstrates) how to use
-  CPP to get conditional compilation for SNL programs depending on the
-  sequencer release. See test/validate/version.st.
+* Pulled a test from the 2.2 branch that demonstrates how to use CPP to get
+  conditional compilation for SNL programs depending on the sequencer
+  release. See test/validate/version.st.
+
+* Fixed a potential memory leak in the (sync-)queue destructor.
 
 .. _Release_Notes_2.1.16:
 
