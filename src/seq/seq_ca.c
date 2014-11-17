@@ -105,6 +105,7 @@ pvStat seq_connect(SPROG *sp, boolean wait)
 
 		do {
 			unsigned ac, mc, cc, gmc;
+			double timeNow;
 			/* Check whether we have been asked to exit */
 			if (sp->die)
 				return pvStatERROR;
@@ -119,7 +120,6 @@ pvStat seq_connect(SPROG *sp, boolean wait)
 			ready = ac == cc && mc == gmc;
 			if (!ready)
 			{
-				double timeNow;
 				if (!firstTime)
 				{
 					errlogSevPrintf(errlogMinor,
