@@ -602,7 +602,7 @@ epicsShareFunc pvStat epicsShareAPI seq_pvAssign(SS_ID ss, VAR_ID varId, const c
 	SPROG	*sp = ss->sprog;
 	CHAN	*ch = sp->chan + varId;
 	pvStat	status = pvStatOK;
-	DBCHAN	*dbch = ch->dbch;
+	DBCHAN	*dbch;
 
 	if (!pvName) pvName = "";
 
@@ -610,12 +610,20 @@ epicsShareFunc pvStat epicsShareAPI seq_pvAssign(SS_ID ss, VAR_ID varId, const c
 
 	epicsMutexMustLock(sp->programLock);
 
+	dbch = ch->dbch;
+
 	if (dbch)	/* was assigned to a named PV */
 	{
+		ch->dbch = 0;
+
+		epicsMutexUnlock(sp->programLock);
+
 		status = pvVarDestroy(dbch->pvid);
 		dbch->pvid = NULL;
 
-		sp->assignCount -= 1;
+		epicsMutexMustLock(sp->programLock);
+
+		sp->assignCount--;
 
 		if (dbch->connected)	/* see connection handler */
 		{
@@ -643,11 +651,11 @@ epicsShareFunc pvStat epicsShareAPI seq_pvAssign(SS_ID ss, VAR_ID varId, const c
 		free(dbch->dbName);
 	}
 
-	if (pvName == NULL || pvName[0] == 0)	/* new name is empty -> free resources */
+	if (pvName[0] == 0)	/* new name is empty -> free resources */
 	{
 		if (dbch) {
-			free(ch->dbch->ssMetaData);
-			free(ch->dbch);
+			free(dbch->ssMetaData);
+			free(dbch);
 		}
 	}
 	else		/* new name is non-empty -> create resources */
@@ -658,6 +666,7 @@ epicsShareFunc pvStat epicsShareAPI seq_pvAssign(SS_ID ss, VAR_ID varId, const c
 			if (!dbch)
 			{
 				errlogSevPrintf(errlogFatal, "pvAssign: calloc failed\n");
+				epicsMutexUnlock(sp->programLock);
 				return pvStatERROR;
 			}
 		}
@@ -666,6 +675,7 @@ epicsShareFunc pvStat epicsShareAPI seq_pvAssign(SS_ID ss, VAR_ID varId, const c
 		{
 			errlogSevPrintf(errlogFatal, "pvAssign: epicsStrDup failed\n");
 			free(dbch);
+			epicsMutexUnlock(sp->programLock);
 			return pvStatERROR;
 		}
 		if ((sp->options & OPT_SAFE) && sp->numSS > 0)
@@ -676,11 +686,12 @@ epicsShareFunc pvStat epicsShareAPI seq_pvAssign(SS_ID ss, VAR_ID varId, const c
 				errlogSevPrintf(errlogFatal, "pvAssign: calloc failed\n");
 				free(dbch->dbName);
 				free(dbch);
+				epicsMutexUnlock(sp->programLock);
 				return pvStatERROR;
 			}
 		}
 		ch->dbch = dbch;
-		sp->assignCount++;
+
 		status = pvVarCreate(
 			sp->pvSys,		/* PV system context */
 			dbch->dbName,		/* DB channel name */
@@ -690,12 +701,16 @@ epicsShareFunc pvStat epicsShareAPI seq_pvAssign(SS_ID ss, VAR_ID varId, const c
 			&dbch->pvid);		/* ptr to pvid */
 		if (status != pvStatOK)
 		{
+			ch->dbch = 0;
 			errlogSevPrintf(errlogFatal, "pvAssign(var %s, pv %s): pvVarCreate() failure: "
 				"%s\n", ch->varName, dbch->dbName, pvVarGetMess(dbch->pvid));
-			if (ch->dbch->ssMetaData)
-				free(ch->dbch->ssMetaData);
-			free(ch->dbch->dbName);
-			free(ch->dbch);
+			free(dbch->ssMetaData);
+			free(dbch->dbName);
+			free(dbch);
+		}
+		else
+		{
+			sp->assignCount++;
 		}
 	}
 

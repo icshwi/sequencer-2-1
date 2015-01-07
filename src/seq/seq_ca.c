@@ -363,15 +363,16 @@ void seq_disconnect(SPROG *sp)
 
 pvStat seq_monitor(CHAN *ch, boolean on)
 {
-	DBCHAN	*dbch = ch->dbch;
+	DBCHAN	*dbch;
 	SPROG	*sp = ch->sprog;
 	pvStat	status;
 	boolean	done;
 
 	assert(ch);
-	assert(dbch);
 
 	epicsMutexMustLock(sp->programLock);
+	dbch = ch->dbch;
+	assert(dbch);
 	done = on == (dbch->monid != NULL);
 	dbch->gotOneMonitor = FALSE;
 	epicsMutexUnlock(sp->programLock);
@@ -406,9 +407,11 @@ void seq_conn_handler(void *var, int connected)
 {
 	CHAN	*ch = (CHAN *)pvVarGetPrivate(var);
 	SPROG	*sp = ch->sprog;
-	DBCHAN	*dbch = ch->dbch;
+	DBCHAN	*dbch;
 
 	epicsMutexMustLock(sp->programLock);
+
+	dbch = ch->dbch;
 
 	assert(dbch != NULL);
 
