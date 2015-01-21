@@ -162,8 +162,8 @@ void seq_get_handler(
 	SSCB	*ss = rq->ss;
 	SPROG	*sp = ch->sprog;
 
-	assert(ch->dbch != NULL);
 	freeListFree(sp->pvReqPool, arg);
+	if (!ch->dbch) return;
 	/* ignore callback if not expected, e.g. already timed out */
 	if (ss->getReq[chNum(ch)] == rq)
 		proc_db_events(value, type, ch, ss, GET_COMPLETE, status);
@@ -181,8 +181,8 @@ void seq_put_handler(
 	SSCB	*ss = rq->ss;
 	SPROG	*sp = ch->sprog;
 
-	assert(ch->dbch != NULL);
 	freeListFree(sp->pvReqPool, arg);
+	if (!ch->dbch) return;
 	/* ignore callback if not expected, e.g. already timed out */
 	if (ss->putReq[chNum(ch)] == rq)
 		proc_db_events(value, type, ch, ss, PUT_COMPLETE, status);
@@ -198,7 +198,7 @@ void seq_mon_handler(
 	SPROG	*sp = ch->sprog;
 	DBCHAN	*dbch = ch->dbch;
 
-	assert(dbch != NULL);
+	if (!dbch) return;
 	/* Process event handling in each state set */
 	proc_db_events(value, type, ch, sp->ss, MON_COMPLETE, status);
 	if (!dbch->gotOneMonitor)
@@ -407,13 +407,15 @@ void seq_conn_handler(void *var, int connected)
 {
 	CHAN	*ch = (CHAN *)pvVarGetPrivate(var);
 	SPROG	*sp = ch->sprog;
-	DBCHAN	*dbch;
+	DBCHAN	*dbch = ch->dbch;
 
 	epicsMutexMustLock(sp->programLock);
 
-	dbch = ch->dbch;
-
-	assert(dbch != NULL);
+	if (!dbch)
+	{
+		epicsMutexUnlock(sp->programLock);
+		return;
+	}
 
 	/* Note that CA may call this while pvVarCreate is still running,
 	   so dbch->pvid may not yet be initialized. */
