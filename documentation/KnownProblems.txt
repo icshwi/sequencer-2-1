@@ -1,6 +1,15 @@
 Known Problems
 ==============
 
+.. _Known_Problems_2.1.18:
+
+Known Problems in Release 2.1.18
+--------------------------------
+
+* A previous bugfix in the pvAssign builtin introduced a regression, that
+  can lead to assertion failures. The code repository contains a fix.
+
+
 .. _Known_Problems_2.1.17:
 
 Known Problems in Release 2.1.17
