@@ -18,7 +18,7 @@ documentation_DEPEND_DIRS = src
 endif
 
 BRANCH = 2-1
-DEFAULT_REPO = rcsadm@repo.acc.bessy.de:/opt/repositories/controls/darcs/epics/support/seq/branch-$(BRANCH)
+DEFAULT_REPO = /opt/repositories/controls/darcs/epics/support/seq/branch-$(BRANCH)
 GIT_MIRROR = /opt/repositories/controls/git/seq/branch-$(BRANCH)
 SEQ_PATH = www/control/SoftDist/sequencer-$(BRANCH)
 USER_AT_HOST = wwwcsr@www-csr.bessy.de
@@ -30,15 +30,13 @@ SEQ_TAG_TIME := $(shell darcs changes --all --xml-output \
 
 include $(TOP)/configure/RULES_TOP
 
-mirror: $(GIT_MIRROR)/.git
-	touch $(GIT_MIRROR)/git.marks
-	darcs convert export --read-marks $(GIT_MIRROR)/darcs.marks --write-marks $(GIT_MIRROR)/darcs.marks | (cd $(GIT_MIRROR) && git fast-import --import-marks=git.marks --export-marks=git.marks)
-	cd $(GIT_MIRROR)/.git && git --bare update-server-info
-	rsync -r -t --delete $(GIT_MIRROR)/.git/ $(USER_AT_HOST):$(SEQ_PATH)/repo/branch-$(BRANCH).git/
-
-sync-repos: mirror
+sync-repos:
 	darcs push $(DEFAULT_REPO)
-	darcs push $(USER_AT_HOST):$(SEQ_PATH)/repo/branch-$(BRANCH)
+	cd $(DEFAULT_REPO) && darcs push --all $(USER_AT_HOST):$(SEQ_PATH)/repo/branch-$(BRANCH)
+	cd $(DEFAULT_REPO) && darcs convert export --read-marks $(GIT_MIRROR)/darcs.marks --write-marks $(GIT_MIRROR)/darcs.marks |\
+	  (cd $(GIT_MIRROR) && git fast-import --import-marks=git.marks --export-marks=git.marks)
+	cd $(GIT_MIRROR)/.git && git --bare update-server-info
+	rsync -r --delete $(GIT_MIRROR)/.git/ $(USER_AT_HOST):$(SEQ_PATH)/repo/branch-$(BRANCH).git/
 
 upload-docs:
 	$(MAKE) -sj docs=1 pdf=1
