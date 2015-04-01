@@ -1,6 +1,35 @@
 Release Notes for Version 2.1
 =============================
 
+.. _Release_Notes_2.1.19:
+
+Release 2.1.19
+--------------
+
+Bug fixes:
+
+* fixed two MS C compiler warnings
+
+* must not assume valid dbch in CA callbacks
+
+  As a consequence of unlocking around pvVarDestroy inside seq_pvAssign,
+  callbacks may be called with dbch being NULL, leading to assertion failures.
+  This patch removes the assertion and instead returns in this case.
+
+* fixed a bug in the Tutorial
+
+  Thanks to Silver <marco_hair@163.com> for reporting the error.
+
+Some improvements to the web pages have been made: the version the pages
+refer to is more prominently visible, some shortcuts have been renamed, and
+side-bar shortcuts to all other (maintained) versions were added.
+
+I added git mirrors of the darcs repos, the URLs are:
+
+http://www-csr.bessy.de/control/SoftDist/sequencer/repo/branch-2-1.git
+http://www-csr.bessy.de/control/SoftDist/sequencer/repo/branch-2-2.git
+http://www-csr.bessy.de/control/SoftDist/sequencer/repo/branch-2-3.git
+
 .. _Release_Notes_2.1.18:
 
 Release 2.1.18
