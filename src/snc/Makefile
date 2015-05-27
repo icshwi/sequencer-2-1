@@ -72,6 +72,8 @@ $(INSTALL_DOC)/%: $(COMMON_DIR)/%
 ifdef BASE_3_14
 %$(DEP): %.c
 	@-$(MKMF) $(HDEPENDS_FLAGS) -m $*$(DEP) $(HDEPENDS_INCLUDES) $*$(OBJ) $<
+else
+type_check$(DEP): parser_created
 endif
 
 ifdef BASE_3_15
