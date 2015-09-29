@@ -30,6 +30,11 @@ SEQ_TAG_TIME := $(shell darcs changes --all --xml-output \
 
 include $(TOP)/configure/RULES_TOP
 
+recreate-git-mirror:
+	rm -rf $(GIT_MIRROR)
+	git init $(GIT_MIRROR)
+	touch $(GIT_MIRROR)/git.marks
+
 sync-repos:
 	darcs push $(DEFAULT_REPO)
 	cd $(DEFAULT_REPO) && darcs push --all $(USER_AT_HOST):$(SEQ_PATH)/repo/branch-$(BRANCH)
@@ -59,4 +64,4 @@ changelog: force
 
 force:
 
-.PHONY: mirror sync-repos upload-docs snapshot release
+.PHONY: mirror sync-repos upload-docs snapshot release recreate-git-mirror
