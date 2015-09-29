@@ -8,8 +8,45 @@ Release 2.1.20
 
 Thanks to the new co-maintainer Freddie Akeroyd <freddie.akeroyd@stfc.ac.uk>
 this release fixes building and running the tests for Windows7 in 32 and 64
-bit, both with Mingw and native compiler. Please note that parallel building
-does not currently work on Windows.
+bit, both with cygwin and native compiler. Please note that parallel building
+may not work on Windows yet.
+
+snc:
+
+* [branch-2-1] snc: cast 0 to Node* in varargs call to node constructor
+
+seq:
+
+* Initialise timeNow
+
+  Required for running tests with windows debug build
+
+test:
+
+* Set PATH for running tests in shared build
+
+  The path to seq.dll needs to be set in cygwin and Windows for running
+  tests when built with SHARED_LIBRARIES=YES
+
+* Fix running tests on Windows
+
+  The \*Ioc.t tests were hanging on windows when run from Make - they
+  worked when ran individually from the command line, but were not then
+  killing the background IOC process on test completion. Using the
+  Win32::Process package rather than fork() to create subprocesses fixes
+  both issues
+
+* set environment variables in a more portable way
+
+* silence warnings about different TOP dirs
+
+* ensure that tests cover seq exit phase
+
+* Reorder test linking for cygwin
+
+  Move subThreadSleep.c to separate library to enable correct import/export
+  declarations for linking on cygwin
+
 
 .. _Release_Notes_2.1.19:
 
