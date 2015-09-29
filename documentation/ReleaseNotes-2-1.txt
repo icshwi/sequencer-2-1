@@ -13,7 +13,9 @@ may not work on Windows yet.
 
 snc:
 
-* [branch-2-1] snc: cast 0 to Node* in varargs call to node constructor
+* cast 0 to Node* in varargs call to node constructor
+
+* added a missing include to types.h
 
 seq:
 
