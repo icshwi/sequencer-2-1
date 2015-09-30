@@ -49,6 +49,15 @@ test:
   Move subThreadSleep.c to separate library to enable correct import/export
   declarations for linking on cygwin
 
+* set HARNESS_ACTIVE env var in queueTest.plt
+
+* use a per host "unique" CA server port
+
+  The idea here is to isolate concurrent test runs on the same machine against
+  each other. The port is set to 10000 + pid % 30000, which is not unique in a
+  strict sense, but the probability of a collision is quite small and the
+  solution is non-intrusive and very simple to implement.
+
 
 .. _Release_Notes_2.1.19:
 
