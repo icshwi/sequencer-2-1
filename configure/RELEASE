@@ -7,3 +7,4 @@
 # EPICS_BASE=/opt/Epics/R3.14.10/base/3-14-10-0-3
 EPICS_BASE=/opt/Epics/R3.14.12/base/3-14-12-2-1
 # EPICS_BASE=/home/franksen/ctl/epics/base/head
+-include $(TOP)/../configure/EPICS_BASE.$(EPICS_HOST_ARCH)
