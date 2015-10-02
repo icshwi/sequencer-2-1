@@ -36,6 +36,13 @@ endif
 INSTALL_DOC = $(INSTALL_LOCATION)/documentation
 DOCS += bnf.inc
 
+# avoid deprecation warnings with base 3.15
+ifdef BASE_3_15
+LEMON = $(INSTALL_HOST_BIN)/lemon$(HOSTEXE)
+else
+LEMON = $(call PATH_FILTER,$(INSTALL_HOST_BIN)/lemon$(HOSTEXE))
+endif
+
 include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
