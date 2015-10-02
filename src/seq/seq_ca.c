@@ -346,7 +346,9 @@ void seq_disconnect(SPROG *sp)
 		DEBUG("seq_disconnect: disconnect %s from %s\n",
 			ch->varName, dbch->dbName);
 		/* Disconnect this PV */
+		epicsMutexUnlock(sp->programLock);
 		status = pvVarDestroy(dbch->pvid);
+		epicsMutexMustLock(sp->programLock);
 		dbch->pvid = NULL;
 		if (status != pvStatOK)
 			errlogSevPrintf(errlogFatal, "seq_disconnect: var %s, pv %s: pvVarDestroy() failure: "
