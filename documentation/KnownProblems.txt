@@ -1,6 +1,15 @@
 Known Problems
 ==============
 
+.. _Known_Problems_2.1.20:
+
+Known Problems in Release 2.1.20
+--------------------------------
+
+* When the an SNL program exits, it can happen that a deadlock ensues
+  between a running CA callback and the main seq thread. This is essentially
+  the same problem as the first item under `Known_Problems_2.1.17`_ below.
+
 .. _Known_Problems_2.1.18:
 
 Known Problems in Release 2.1.18
