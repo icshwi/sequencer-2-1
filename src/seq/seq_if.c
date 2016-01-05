@@ -542,7 +542,7 @@ epicsShareFunc boolean epicsShareAPI seq_pvPutComplete(
 				        ch->varName);
 			done = TRUE;
 		}
-		else if (!ss->putReq[varId])
+		else if (!ss->putReq[varId+n])
 		{
 		        errlogSevPrintf(errlogMinor,
 			        "pvPutComplete(%s): no pending put request for this variable\n",
@@ -554,7 +554,7 @@ epicsShareFunc boolean epicsShareAPI seq_pvPutComplete(
 			switch (epicsEventTryWait(putSem))
 			{
 			case epicsEventWaitOK:
-				ss->putReq[varId] = NULL;
+				ss->putReq[varId+n] = NULL;
 				epicsEventSignal(putSem);
 				check_connected(ch->dbch, metaPtr(ch,ss));
 				/* TODO: returning either TRUE or FALSE here seems wrong. We return TRUE,
@@ -565,7 +565,7 @@ epicsShareFunc boolean epicsShareAPI seq_pvPutComplete(
 			case epicsEventWaitTimeout:
 				break;
 			case epicsEventWaitError:
-				ss->putReq[varId] = NULL;
+				ss->putReq[varId+n] = NULL;
 				epicsEventSignal(putSem);
 				errlogSevPrintf(errlogFatal, "pvPutComplete(%s): "
 				  "epicsEventTryWait(putSem[%d]) failure\n", ch->varName, varId);
