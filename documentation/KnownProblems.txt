@@ -10,6 +10,14 @@ Known Problems in Release 2.1.20
   between a running CA callback and the main seq thread. This is essentially
   the same problem as the first item under `Known_Problems_2.1.17`_ below.
 
+* The handling of channel arrays in the pvPutComplete built-in function is
+  broken: channels behind the first array element are not properly checked
+  and wrong results may be returned for them. This bug is at least as old as
+  release 2.1.18.
+
+* The pvFlushQ built-in function can cause a bad memory access, crashing the
+  program.
+
 .. _Known_Problems_2.1.18:
 
 Known Problems in Release 2.1.18
