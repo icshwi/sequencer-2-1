@@ -238,9 +238,11 @@ epicsShareFunc boolean epicsShareAPI seq_pvGetComplete(SS_ID ss, VAR_ID varId)
 
 	if (!ss->getReq[varId])
 	{
+#if 0
 		errlogSevPrintf(errlogMinor,
 			"pvGetComplete(%s): no pending get request for this variable\n",
 			ch->varName);
+#endif
 		return TRUE;
 	}
 
@@ -544,9 +546,11 @@ epicsShareFunc boolean epicsShareAPI seq_pvPutComplete(
 		}
 		else if (!ss->putReq[varId+n])
 		{
+#if 0
 		        errlogSevPrintf(errlogMinor,
 			        "pvPutComplete(%s): no pending put request for this variable\n",
 			        ch->varName);
+#endif
 			done = TRUE;
 		}
 		else
