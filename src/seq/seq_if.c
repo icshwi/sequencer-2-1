@@ -572,7 +572,7 @@ epicsShareFunc boolean epicsShareAPI seq_pvPutComplete(
 				ss->putReq[varId+n] = NULL;
 				epicsEventSignal(putSem);
 				errlogSevPrintf(errlogFatal, "pvPutComplete(%s): "
-				  "epicsEventTryWait(putSem[%d]) failure\n", ch->varName, varId);
+				  "epicsEventTryWait(putSem[%d]) failure\n", ch->varName, varId+n);
 				break;
 			}
 		}
