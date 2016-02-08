@@ -1,6 +1,74 @@
 Release Notes for Version 2.1
 =============================
 
+.. _Release_Notes_2.1.21:
+
+Release 2.1.21
+--------------
+
+build rules:
+
+* snc: simplify the multi-target lemon rule
+
+  Instead of generating an intermediate file ("parser_created") we now use a
+  pattern rule. This is the more reliable (and recommended) way to make rules
+  with multiple targets work as expected.
+
+* bring build rules on par with version 2.2
+
+  This includes a fix for the PATH_FILTER warnings and proper generation (and
+  include) of .d files.
+
+* RULES_BUILD: make snc build rules atomic
+
+* test only for BASE_3_14==YES and a bit of refactoring
+
+  The assumption here is that stuff that was added for 3.15 will
+  remain in future versions. Thus we should not test for 3.15 yet;
+  instead do this when we add support for 3.16 etc.
+
+The two were requested by Mark Rivers to make integration with synapps easier:
+
+* added include of meta build configuration to configure/RELEASE
+
+* removed configure/RELEASE.win32-x86
+
+seq:
+
+* disabled 'no pending put request' error message in pvGet/PutComplete
+
+  As Janez pointed out, it makes sense to call pvPutComplete for a channel
+  array in which only some of the channels have pending puts. This resulted in
+  lots of annoying messages on the console. Note that calling pvPutComplete
+  with no pending put is completely harmless (it just returns TRUE).
+
+  For symmetry, I have disabled the corresponding message in pvGetComplete,
+  too, even though the latter does not handle channel arrays.
+
+The following three are fixes for the :ref:`Known_Problems_2.1.20`:
+
+* fixed broken array handling in pvPutComplete
+
+  In some places, 'varId' was used instead of 'varId+n' (where n is the array
+  index). Thanks to Janez Golob <janez.golob@cosylab.com> for the bug report
+  and the fix, too.
+
+* fixed bad memory access in pvFlushQ
+
+* must not hold program lock during pvVarDestroy when exiting
+
+  This is essentially the same problem as the recently fixed deadlock in the
+  pvAssign builtin function.
+
+test:
+
+* avoid warning about self-comparison
+
+* fix (a few) clang compiler warnings
+
+* refactor killing background IOCs
+
+
 .. _Release_Notes_2.1.20:
 
 Release 2.1.20
